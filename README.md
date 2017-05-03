@@ -6,7 +6,7 @@ AWS PowerShell Python Lambda, or PSPy for short, is a simple Python 2.7 AWS Lamb
 Setup is very easy depending on your level of trust with a random GitHub repository you found on the internet.
 
 ##### Quickstart
-If you prefer to get started right away, use GitHub's download zip feature and upload the zip file as the code for a new Lambda function in your AWS account.
+If you prefer to get started right away, head over to the [releases](https://github.com/vector-sec/PSPy/releases/) page and grab the latest zip file and upload the zip file as the code for a new Lambda function in your AWS account.
 
 ##### Build from scratch
 Alternatively, if you want to ensure you are getting the latest PowerShell release, and that nothing else is packaged with it [nothing is, I promise :) ] then follow the steps below.
