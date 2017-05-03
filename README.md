@@ -1,6 +1,6 @@
-# AWS PowerShell Lambda - PSPy
+# AWS PowerShell Python Lambda - PSPy
 
-AWS PowerShell Lambda, or PSPy for short, is a simple Python 2.7 AWS Lambda function designed to execute the PowerShell binary and marshal input/output to PowerShell.
+AWS PowerShell Python Lambda, or PSPy for short, is a simple Python 2.7 AWS Lambda function designed to execute the PowerShell binary and marshal input/output to PowerShell.
 
 ## Setup
 Setup is very easy depending on your level of trust with a random GitHub repository you found on the internet.
@@ -94,10 +94,10 @@ Simply pass your Lambda function an event that looks like this
 ```
 
 ## I found an issue
-Great! I threw this silly thing together rather hastily so it's not unlikely to have issues. Open an issue with the repository explaining what is wrong and we'll see if we can't figure out how to fix the problem. Or you can bring up an issue and the solution in a pull request.
+Great! I threw this silly thing together rather hastily so it's likely to have issues. Open an issue with the repository explaining what is wrong and we'll see if we can't figure out how to fix the problem. Or you can bring up an issue and the solution in a pull request.
 
 ## I have a suggestion
-Awesome! Create an issue describing your suggestion, including a pull request if have decided to take care of implementing your suggestion for me.
+Awesome! Create an issue describing your suggestion, including a pull request if you have decided to take care of implementing your suggestion for me.
 
 ## Why on earth did you do this?
 In short: I like PowerShell and wanted to run it in AWS Lambda.
