@@ -1,0 +1,269 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.PowerShell.CoreCLR.AssemblyLoadContext</name>
+    </assembly>
+    <members>
+        <member name="M:System.Management.Automation.AssemblyMetadataHelper.GetAssemblyStrongName(System.Reflection.Metadata.MetadataReader)">
+            <summary>
+            Construct the strong assembly name from metadata
+            </summary>
+        </member>
+        <member name="T:System.Management.Automation.PowerShellAssemblyLoadContext">
+            <summary>
+            The powershell custom AssemblyLoadContext implementation
+            </summary>
+        </member>
+        <member name="M:System.Management.Automation.PowerShellAssemblyLoadContext.InitializeSingleton(System.String,System.Boolean)">
+            <summary>
+            Initialize a singleton of PowerShellAssemblyLoadContext
+            </summary>
+        </member>
+        <member name="M:System.Management.Automation.PowerShellAssemblyLoadContext.#ctor(System.String,System.Boolean)">
+             <summary>
+             Constructor
+             </summary>
+             <param name="basePaths">
+             Base directory paths that are separated by semicolon ';'.
+             They will be the default paths to probe assemblies.
+             </param>
+             <param name="useResolvingHandlerOnly">
+             Indicate whether this instance is going to be used as a
+             full fledged ALC, or only its 'Resolve' handler is going
+             to be used.
+             </param>
+             <remarks>
+             When <paramref name="useResolvingHandlerOnly"/> is true, we will register to the 'Resolving' event of the default
+             load context with our 'Resolve' method, and depend on the default load context to resolve/load assemblies for PS.
+             This mode is used when TPA list of the native host only contains .NET Core libraries.
+             In this case, TPA binder will be consulted before hitting our resolving logic. The binding order of Assembly.Load is:
+                 TPA binder --> Resolving event
+            
+             When <paramref name="useResolvingHandlerOnly"/> is false, we will use this instance as a full fledged load context
+             to resolve/load assemblies for PS. This mode is used when TPA list of the native host contains both .NET Core libraries
+             and PS assemblies.
+             In this case, our Load override will kick in before consulting the TPA binder. The binding order of Assembly.Load is:
+                 Load override --> TPA binder --> Resolving event
+             </remarks>
+        </member>
+        <member name="F:System.Management.Automation.PowerShellAssemblyLoadContext.s_assemblyCache">
+             <summary>
+             Assembly cache across the AppDomain
+             </summary>
+             <remarks>
+             We user the assembly short name (AssemblyName.Name) as the key.
+             According to the Spec of AssemblyLoadContext, "in the context of a given instance of AssemblyLoadContext, only one assembly with
+             a given name can be loaded. Attempt to load a second assembly with the same name and different MVID will result in an exception."
+            
+             MVID is Module Version Identifier, which is a guid. Its purpose is solely to be unique for each time the module is compiled, and
+             it gets regenerated for every compilation. That means AssemblyLoadContext cannot handle loading two assemblies with the same name
+             but different versions, not even two assemblies with the exactly same code and version but built by two separate compilations.
+            
+             Therefore, there is no need to use the full assembly name as the key. Short assembly name is sufficient.
+             </remarks>
+        </member>
+        <member name="P:System.Management.Automation.PowerShellAssemblyLoadContext.Instance">
+            <summary>
+            Singleton instance of PowerShellAssemblyLoadContext
+            </summary>
+        </member>
+        <member name="E:System.Management.Automation.PowerShellAssemblyLoadContext.AssemblyLoad">
+            <summary>
+            Assembly load event
+            </summary>
+        </member>
+        <member name="M:System.Management.Automation.PowerShellAssemblyLoadContext.Load(System.Reflection.AssemblyName)">
+            <summary>
+            Implement the AssemblyLoadContext.Load(AssemblyName). Search the requested assembly in probing paths.
+            Search the file "[assemblyName.Name][.ni].dll" in probing paths. If the file is found and it matches the requested AssemblyName, load it with LoadFromAssemblyPath.
+            </summary>
+        </member>
+        <member name="M:System.Management.Automation.PowerShellAssemblyLoadContext.Resolve(System.Runtime.Loader.AssemblyLoadContext,System.Reflection.AssemblyName)">
+            <summary>
+            The handler for the Resolving event
+            </summary>
+        </member>
+        <member name="M:System.Management.Automation.PowerShellAssemblyLoadContext.LoadFrom(System.String)">
+            <summary>
+            Load an IL or NI assembly from its file path.
+            </summary>
+        </member>
+        <member name="M:System.Management.Automation.PowerShellAssemblyLoadContext.LoadFrom(System.IO.Stream)">
+            <summary>
+            Load assembly from byte stream.
+            </summary>
+        </member>
+        <member name="M:System.Management.Automation.PowerShellAssemblyLoadContext.GetAssemblies(System.String)">
+            <summary>
+            Get the current loaded assemblies
+            </summary>
+        </member>
+        <member name="M:System.Management.Automation.PowerShellAssemblyLoadContext.TryAddAssemblyToCache(System.Reflection.Assembly)">
+            <summary>
+            Try adding a new assembly to the cache
+            </summary>
+            <remarks>
+            This is for adding a dynamic assembly to the cache.
+            PowerShell generates dynamic assemblies by directly emitting IL, and this API
+            is to add such assemblies to the cache so that types in them are discoverable.
+            </remarks>
+        </member>
+        <member name="M:System.Management.Automation.PowerShellAssemblyLoadContext.ProbeAssemblyFileForMetadataAnalysis(System.String,System.String)">
+            <summary>
+            Probe for the assembly file with the specified short name for metadata analysis purpose
+            </summary>
+        </member>
+        <member name="M:System.Management.Automation.PowerShellAssemblyLoadContext.GetAvailableDotNetTypes">
+            <summary>
+            Get the namespace-qualified type names of all available CoreCLR .NET types.
+            This is used for type name auto-completion in PS engine.
+            </summary>
+        </member>
+        <member name="M:System.Management.Automation.PowerShellAssemblyLoadContext.SetProfileOptimizationRootImpl(System.String)">
+            <summary>
+            Set the profile optimization root on the appropriate load context
+            </summary>
+            <remarks>
+            When using PS ALC as a full fledged ALC in OPS, we don't enable profile optimization.
+            This is because PS assemblies will be recorded in the profile, and the next time OPS
+            starts up, the default context will load the PS assemblies pretty early to ngen them
+            in another CPU core, so our Load override won't track the loading of them, and thus
+            OPS will fail to work.
+            The root cause is that dotnet.exe put all PS assemblies in TPA list. If PS assemblies
+            are not in TPA list, then we can enable profile optimization without a problem.
+            </remarks>
+        </member>
+        <member name="M:System.Management.Automation.PowerShellAssemblyLoadContext.StartProfileOptimizationImpl(System.String)">
+            <summary>
+            Start the profile optimization on the appropriate load context
+            </summary>
+            <remarks>
+            When using PS ALC as a full fledged ALC in OPS, we don't enable profile optimization.
+            This is because PS assemblies will be recorded in the profile, and the next time OPS
+            starts up, the default context will load the PS assemblies pretty early to ngen them
+            in another CPU core, so our Load override won't track the loading of them, and thus
+            OPS will fail to work.
+            The root cause is that dotnet.exe put all PS assemblies in TPA list. If PS assemblies
+            are not in TPA list, then we can enable profile optimization without a problem.
+            </remarks>
+        </member>
+        <member name="M:System.Management.Automation.PowerShellAssemblyLoadContext.OnAssemblyLoaded(System.Reflection.Assembly)">
+            <summary>
+            Handle the AssemblyLoad event
+            </summary>
+        </member>
+        <member name="M:System.Management.Automation.PowerShellAssemblyLoadContext.ValidateAssemblyPath(System.String,System.String)">
+            <summary>
+            Validate assembly path value for the specified parameter
+            </summary>
+        </member>
+        <member name="M:System.Management.Automation.PowerShellAssemblyLoadContext.GetAssemblyName(System.IO.Stream)">
+            <summary>
+            Get AssemblyName of an assembly stream
+            </summary>
+        </member>
+        <member name="M:System.Management.Automation.PowerShellAssemblyLoadContext.TryGetAssemblyFromCache(System.Reflection.AssemblyName,System.Reflection.Assembly@)">
+            <summary>
+            Try to get the specified assembly from cache
+            </summary>
+        </member>
+        <member name="M:System.Management.Automation.PowerShellAssemblyLoadContext.IsAssemblyMatching(System.Reflection.AssemblyName,System.Reflection.AssemblyName)">
+            <summary>
+            Check if the loaded assembly matches the request
+            </summary>
+            <param name="requestedAssembly">AssemblyName of the requested assembly</param>
+            <param name="loadedAssembly">AssemblyName of the loaded assembly</param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Management.Automation.PowerShellAssemblyLoadContext.GetTrustedPlatformAssembly(System.String)">
+            <summary>
+            Get the TPA that is represented by the specified assembly strong name.
+            </summary>
+            <param name="tpaStrongName">
+            The assembly strong name of a CoreCLR Trusted_Platform_Assembly
+            </param>
+        </member>
+        <member name="M:System.Management.Automation.PowerShellAssemblyLoadContext.ThrowFileLoadException(System.String,System.Object[])">
+            <summary>
+            Throw FileLoadException
+            </summary>
+        </member>
+        <member name="M:System.Management.Automation.PowerShellAssemblyLoadContext.ThrowFileNotFoundException(System.String,System.Object[])">
+            <summary>
+            Throw FileNotFoundException
+            </summary>
+        </member>
+        <member name="T:System.Management.Automation.PowerShellAssemblyLoadContextInitializer">
+            <summary>
+            This is the managed entry point for Microsoft.PowerShell.CoreCLR.AssemblyLoadContext.dll.
+            </summary>
+        </member>
+        <member name="M:System.Management.Automation.PowerShellAssemblyLoadContextInitializer.SetPowerShellAssemblyLoadContext(System.String)">
+            <summary>
+            Create a singleton of PowerShellAssemblyLoadContext.
+            Then register to the Resolving event of the load context that loads this assembly.
+            </summary>
+            <remarks>
+            This method is to be used by native host whose TPA list doesn't include PS assemblies, such as the
+            in-box Nano powershell.exe, the PS remote WinRM plugin, in-box Nano DSC and in-box Nano SCOM agent.
+            </remarks>
+            <param name="basePaths">
+            Base directory paths that are separated by semicolon ';'.
+            They will be the default paths to probe assemblies.
+            </param>
+        </member>
+        <member name="M:System.Management.Automation.PowerShellAssemblyLoadContextInitializer.WSManPluginWrapper(System.IntPtr)">
+            <summary>
+            Create a singleton of PowerShellAssemblyLoadContext.
+            Then load System.Management.Automation and call the WSManPluginManagedEntryWrapper delegate.
+            </summary>
+            <remarks>
+            This method is used by the native host of the PSRP plugin.
+            </remarks>
+            <param name="wkrPtrs">
+            Passed to delegate.
+            </param>
+        </member>
+        <member name="M:System.Management.Automation.PowerShellAssemblyLoadContextInitializer.InitializeAndLoadEntryAssembly(System.String,System.Reflection.AssemblyName)">
+            <summary>
+            Create a singleton of PowerShellAssemblyLoadContext.
+            Then load the assembly containing the actual entry point using it.
+            </summary>
+            <param name="basePaths">
+            Base directory paths that are separated by semicolon ';'.
+            They will be the default paths to probe assemblies.
+            </param>
+            <param name="entryAssemblyName">
+            Name of the assembly that contains the actual entry point.
+            </param>
+            <returns>
+            The assembly that contains the actual entry point.
+            </returns>
+        </member>
+        <member name="M:System.Management.Automation.PowerShellAssemblyLoadContextInitializer.InitializeAndCallEntryMethod(System.String,System.Reflection.AssemblyName,System.String,System.String,System.Object[])">
+            <summary>
+            Create a singleton of PowerShellAssemblyLoadContext.
+            Then call into the actual entry point based on the given assembly name, type name, method name and arguments.
+            </summary>
+            <param name="basePaths">
+            Base directory paths that are separated by semicolon ';'.
+            They will be the default paths to probe assemblies.
+            </param>
+            <param name="entryAssemblyName">
+            Name of the assembly that contains the actual entry point.
+            </param>
+            <param name="entryTypeName">
+            Name of the type that contains the actual entry point.
+            </param>
+            <param name="entryMethodName">
+            Name of the actual entry point method.
+            </param>
+            <param name="args">
+            An array of arguments passed to the entry point method.
+            </param>
+            <returns>
+            The return value of running the entry point method.
+            </returns>
+        </member>
+    </members>
+</doc>
