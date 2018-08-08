@@ -6,6 +6,8 @@ def lambda_handler(event, context):
     #environment variables required for powershell to start
     os.environ["HOME"] = "/tmp"
     os.environ["PSHOME"] = "/tmp"
+    #need to make powershell binary executable
+    process = subprocess.Popen(["/bin/chmod +x /var/task/powershell"],stdout=subprocess.PIPE,stderr=subprocess.STDOUT,shell=True)
     if executionArg == "-c":
         process = subprocess.Popen(["/var/task/powershell -c '{}'".format(executionPayload)],stdout=subprocess.PIPE,stderr=subprocess.STDOUT,shell=True)
     elif executionArg == "-enc":
